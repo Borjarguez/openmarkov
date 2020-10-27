@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
+
 /**
  * Create objects for Hugin algorithm inference. This class is nearly empty
  * because the algorithm is implemented in <code>HuginForest</code> construction
@@ -42,7 +44,7 @@ import java.util.List;
  */
 @InferenceAnnotation(name = "HuginPropagation") public class HuginPropagation extends ClusterPropagation implements Propagation {
 	// Constructor
-
+	private List<Variable> variablesOfInterest;
 	/**
 	 * @param probNet <code>ProbNet</code>
 	 * @throws NotEvaluableNetworkException NotEvaluableNetworkException

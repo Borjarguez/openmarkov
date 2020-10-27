@@ -15,9 +15,11 @@ import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.core.model.network.potential.TablePotential;
 import org.openmarkov.gui.dialog.io.NetsIO;
+
 import org.openmarkov.inference.huginPropagation.HuginPropagation;
 import org.openmarkov.inference.likelihoodWeighting.LikelihoodWeighting;
 import org.openmarkov.inference.likelihoodWeighting.LogicSampling;
+import org.openmarkov.inference.likelihoodWeighting.StochasticPropagation;
 import org.openmarkov.inference.variableElimination.tasks.VEPropagation;
 
 // This class carries out evidence propagation on a given network printing out
@@ -150,17 +152,97 @@ public class InferenceTester {
 
 	public static void main(String[] args) throws Exception {
 
-		InferenceTester obj = new InferenceTester("asia.pgmx");
+		InferenceTester obj = new InferenceTester("Pigs.pgmx");
 
 		obj.setSeed(9762L);
 
 		System.out.format("Network \"%s\" with %d nodes and %d links\n", obj.getProbNet().getName(),
 				obj.getProbNet().getNumNodes(), obj.getProbNet().getLinks().size());
 
-		EvidenceCase evidence = obj.getRandomEvidence(2);
-		List<Variable> variablesOfInterest = obj.getRandomVariablesOfInterest(1, evidence);
+		EvidenceCase evidence = obj.getRandomEvidence(1);
+		List<Variable> variablesOfInterest = obj.getRandomVariablesOfInterest(6, evidence);
 
-		obj.VEInference(variablesOfInterest, evidence);
+		//obj.VEInference(variablesOfInterest, evidence);
+		//obj.HuginInference(variablesOfInterest, evidence);
+		//obj.LogicSamplingInference(variablesOfInterest, evidence);
+		obj.LikelyhoodWeightingInference(variablesOfInterest, evidence);
 	}
 
+	private long HuginInference(List<Variable> variablesOfInterest, EvidenceCase evidence) {
+		System.out.println("HuginInference");
+		HuginPropagation propagation = null;
+		try {
+			propagation = new HuginPropagation(probNet);
+		} catch (NotEvaluableNetworkException e) {
+			e.printStackTrace();
+		}
+		propagation.setVariablesOfInterest(variablesOfInterest);
+		propagation.setPostResolutionEvidence(evidence);
+
+		System.out.print("Variable elimination\n");
+		long startTime = System.nanoTime();
+		try {
+			Map<Variable, TablePotential> posteriorProbabilities = propagation.getPosteriorValues();
+			printProbabilities(evidence, variablesOfInterest, posteriorProbabilities);
+
+		} catch (IncompatibleEvidenceException 	| OutOfMemoryError e) {
+			e.printStackTrace();
+		}
+		long endTime = System.nanoTime();
+
+		printTime(endTime - startTime);
+		return (endTime - startTime);
+	}
+
+	private long LogicSamplingInference(List<Variable> variablesOfInterest, EvidenceCase evidence) {
+		LogicSampling propagation = null;
+		try {
+			propagation = new LogicSampling(probNet);
+		} catch (NotEvaluableNetworkException e) {
+			e.printStackTrace();
+		}
+		propagation.setVariablesOfInterest(variablesOfInterest);
+		propagation.setPostResolutionEvidence(evidence);
+		propagation.setSampleSize(10000);
+
+		System.out.print("Variable elimination\n");
+		long startTime = System.nanoTime();
+		try {
+			Map<Variable, TablePotential> posteriorProbabilities = propagation.getPosteriorValues();
+			printProbabilities(evidence, variablesOfInterest, posteriorProbabilities);
+
+		} catch (IncompatibleEvidenceException 	| OutOfMemoryError e) {
+			e.printStackTrace();
+		}
+		long endTime = System.nanoTime();
+
+		printTime(endTime - startTime);
+		return (endTime - startTime);
+	}
+
+	private long LikelyhoodWeightingInference(List<Variable> variablesOfInterest, EvidenceCase evidence) {
+		LikelihoodWeighting propagation = null;
+		try {
+			propagation = new LikelihoodWeighting(probNet);
+		} catch (NotEvaluableNetworkException e) {
+			e.printStackTrace();
+		}
+		propagation.setVariablesOfInterest(variablesOfInterest);
+		propagation.setPostResolutionEvidence(evidence);
+		propagation.setSampleSize(10000);
+
+		System.out.print("Variable elimination\n");
+		long startTime = System.nanoTime();
+		try {
+			Map<Variable, TablePotential> posteriorProbabilities = propagation.getPosteriorValues();
+			printProbabilities(evidence, variablesOfInterest, posteriorProbabilities);
+
+		} catch (IncompatibleEvidenceException 	| OutOfMemoryError e) {
+			e.printStackTrace();
+		}
+		long endTime = System.nanoTime();
+
+		printTime(endTime - startTime);
+		return (endTime - startTime);
+	}
 }
